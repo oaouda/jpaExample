@@ -1,0 +1,125 @@
+Create project
+New Web Application, Select JavaServer Faces
+
+
+- Create the database schema
+Create table .....()
+Execute the script to create the table in the database
+Verify the database table was created
+
+
+
+- Update the web.xml: Setup JDBC injection configuration to generate the entity class
+    <resource-ref>
+        <res-ref-name>jdbc/jpa</res-ref-name>
+        <res-type>javax.sql.ConnectionPoolDataSource</res-type>
+        <res-auth>Container</res-auth>
+        <res-sharing-scope>Shareable</res-sharing-scope>
+    </resource-ref>
+
+- Create JDBC resource	
+New File -> GlassFish->JDBC Resource
+General Attributes:
+  Create New JDBC Connection Pool
+  JNDI Name: jdbc/jpa  (from web.xml res-ref-name)
+  Next
+  Choose Database Connection: JDBC Connection Pool Name: JpaConnectionPool
+  Make sure you pointing to the correct database
+  
+  Add connection Pool Properties:
+	Datasource Classname: org.apache.derby.jdbc.ClientDataSource
+     Resource Type: javax.sql.ConnectionPoolDataSource   (from xml res-type)
+  Click Next for "Add Connection Pool Optional Properties
+
+  Now, we have jdbc-resources.xml
+  
+  Example:
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE resources PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN" "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+<resources>
+  <jdbc-resource enabled="true" jndi-name="jdbc/jpa" object-type="user" pool-name="JpaConnectionPool">
+    <description/>
+  </jdbc-resource>
+  <jdbc-connection-pool allow-non-component-callers="false" associate-with-thread="false" connection-creation-retry-attempts="0" connection-creation-retry-interval-in-seconds="10" connection-leak-reclaim="false" connection-leak-timeout-in-seconds="0" connection-validation-method="auto-commit" datasource-classname="org.apache.derby.jdbc.ClientDataSource" fail-all-connections="false" idle-timeout-in-seconds="300" is-connection-validation-required="false" is-isolation-level-guaranteed="true" lazy-connection-association="false" lazy-connection-enlistment="false" match-connections="false" max-connection-usage-count="0" max-pool-size="32" max-wait-time-in-millis="60000" name="JpaConnectionPool" non-transactional-connections="false" pool-resize-quantity="2" res-type="javax.sql.ConnectionPoolDataSource" statement-timeout-in-seconds="-1" steady-pool-size="8" validate-atmost-once-period-in-seconds="0" wrap-jdbc-objects="false">
+    <property name="URL" value="jdbc:derby://localhost:1527/jpa"/>
+    <property name="serverName" value="localhost"/>
+    <property name="PortNumber" value="1527"/>
+    <property name="DatabaseName" value="jpa"/>
+    <property name="User" value="aouda"/>
+    <property name="Password" value="admin"/>
+  </jdbc-connection-pool>
+</resources>
+
+Now we have sun-resource.xml
+
+- Create entity class from database
+Source package > New > Other > Persistence >Entity Classes from Database
+Database Connection: make sure you point to the correct database
+click on Available table and move to Selected Tables
+Package:  create separate package for the entity  xx.xxx.xx.entity
+Now you have Book.java class
+
+- Create enterprise java bean to handle the transaction and session control between the database and the code
+Source Package > New > Other > Persistence > Session Beans for Entity Classes
+Select the Entity class from the "Available Entity Classes"
+Change the package name xx.xx.xx.jpaejb
+  > This will generate two files: 
+  AbstractFacade.java
+  BookFacade.java
+Note: BookFacade.java contains the query for the entity(CRUD)
+  
+Now, we created the beans to manage the data in the database
+
+- Source Package > New Java Package >   Package name: xx.xx.beans  
+Now you can create your bean to control the database
+Create two classes were created:
+
+ > BookBeans.java
+ @Named (value = "bookbean")
+@SessionScoped
+public class BookBean implements Serializable{
+    // Same properties from the book entity class
+    private Integer id;
+    private String title;
+    private String author;
+    private Float price;
+    private Integer pubyear;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+ 
+ 
+ > BookController.java
+ // use Facade class to get access to the database, bookFacade
+ // BookBean to interact with the client (you get the data from gui to bookBean)
+ 
+ @Named(value = "BookController")
+@SessionScoped
+public class BookController  implements Serializable {
+    @EJB
+    BookFacade bookFacade;
+    
+    @Inject
+    BookBean bookBean;
+	....
+    
+}
+ 
+ 
+ NOTE: BookController will have BookFacade to get access to the database
+ @EJB
+ bookFacade bookFace
+ 
+ BookBean.java to interact with the client. it is identical to the entity class
+ 
+ 
+ 
+ 
+ - Create index.html to display the data
+ - Create add.html to add book to the database
+ 
+
